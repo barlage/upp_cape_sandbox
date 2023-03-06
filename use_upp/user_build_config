@@ -1,11 +1,11 @@
 
 #===============================================================================
-#  Baseline configuration for NOAA Hera build
+#  Baseline configuration for mac gfortran build
 #===============================================================================
 
- COMPILERF90    =       ifort
- FREESOURCE     =       -free
- F90FLAGS       =       #-r8 -init=huge
- NETCDFMOD      =       -I${NETCDF}/include
- NETCDFLIB      =       -L${NETCDF}/lib -lnetcdf -lnetcdff
- UPPDIR        =       /scratch2/NCEPDEV/land/Michael.Barlage/ufs-weather-model/FV3/upp/sorc/ncep_post.fd
+ COMPILERF90    =       gfortran-mp-12
+ FREESOURCE     =       -ffree-form
+ F90FLAGS       =       #-fdefault-real-8 -fdefault-double-8
+ NETCDFMOD      =       -I/opt/local/include
+ NETCDFLIB      =       -L/opt/local/lib -lnetcdf -lnetcdff
+ UPPDIR         =       /Users/barlage/work/models/UPP/sorc/ncep_post.fd

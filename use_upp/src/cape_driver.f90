@@ -13,9 +13,12 @@ implicit none
 
 integer, parameter :: num_atmo_levels = 127
 integer, parameter :: cape_type = 2           ! only 2 works for now
-integer, parameter :: num_increments = 10     ! n will produce -n:n vector, length 2n+1
+integer, parameter :: parcel_level_type2 = 0  ! parcel level relative to surface (0 for surface) for cape_type 2
+real   , parameter :: dpbnd_type1 = 10000.0   ! set dpbnd for type 1 cape
+integer, parameter :: num_increments = 10     ! n will produce -n:n vector, length 2n+1 (0 for sounding only)
 real   , parameter :: t_range = 10.0          ! one sided range of temperature
 real   , parameter :: q_range = 5.0           ! one sided rang of spec humid [g/kg]
+logical, parameter :: create_netcdf = .true.  ! create a netcdf file, recommended for num_increments > 0
 
 real, dimension(num_atmo_levels)   :: sounding_t, sounding_q, sounding_p, sounding_dz, rtmp
 real, dimension(num_atmo_levels+1) :: sounding_z
@@ -33,7 +36,7 @@ real,    allocatable :: THUND(:,:) ! Thunder parameter?
 
 real :: PT
 
-integer :: level, total_bins, irange, jrange
+integer :: level, total_bins, irange, jrange, type2_parcel
 
 integer :: ncid, dimid, varid, status   ! netcdf identifiers
 integer :: dim_id_i, dim_id_j           ! netcdf dimension identifiers
@@ -85,6 +88,8 @@ do level = num_atmo_levels, 1, -1
 end do
 sounding_p = 100.0*sounding_p  ! convert to Pa
 
+type2_parcel = num_atmo_levels - parcel_level_type2
+
 do irange = ista, iend   ! temperature
 do jrange = jsta, jend   ! specific humidity
 
@@ -94,19 +99,19 @@ do jrange = jsta, jend   ! specific humidity
   ZINT (irange,jrange,:) = sounding_z
 
  if(num_increments > 0) then
-  T(irange,jrange,num_atmo_levels) = sounding_t(num_atmo_levels) + &
+  T(irange,jrange,type2_parcel) = sounding_t(type2_parcel) + &
            t_range*(irange - num_increments-1)/num_increments
-  Q(irange,jrange,num_atmo_levels) = sounding_q(num_atmo_levels) + &
+  Q(irange,jrange,type2_parcel) = sounding_q(type2_parcel) + &
            q_range/1000.0*(jrange - num_increments-1)/num_increments
  end if
 
 end do
 end do
 
-DPBND = huge(1.0)
-P1D(ista:iend,jsta:jend)   = PMID(ista:iend,jsta:jend,num_atmo_levels)
-T1D(ista:iend,jsta:jend)   = T(ista:iend,jsta:jend,num_atmo_levels)
-Q1D(ista:iend,jsta:jend)   = Q(ista:iend,jsta:jend,num_atmo_levels)
+DPBND = dpbnd_type1
+P1D(ista:iend,jsta:jend)   = PMID(ista:iend,jsta:jend,type2_parcel)
+T1D(ista:iend,jsta:jend)   = T(ista:iend,jsta:jend,type2_parcel)
+Q1D(ista:iend,jsta:jend)   = Q(ista:iend,jsta:jend,type2_parcel)
 L1D   = num_atmo_levels
 LMH   = num_atmo_levels
 
@@ -118,6 +123,8 @@ call table(PTBL,TTBL,PT,RDQ,RDTH,RDP,RDTHE,PL,THL,QS0,SQS,STHE,THE0)
 call tableq(TTBLQ,RDPQ,RDTHEQ,PLQ,THL,STHEQ,THE0Q)
 
 call calcape(cape_type,DPBND,P1D,T1D,Q1D,L1D,CAPE,CINS,PPARC,ZEQL,THUND)
+
+if(create_netcdf) then
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! create the output filename and netcdf file (overwrite old)
@@ -180,6 +187,13 @@ call calcape(cape_type,DPBND,P1D,T1D,Q1D,L1D,CAPE,CINS,PPARC,ZEQL,THUND)
     if (status /= nf90_noerr) call handle_err(status)
 
  status = nf90_close(ncid)
+ 
+else
+
+ print*, 'CAPE: ', cape
+ print*, 'CIN:  ', cins
+
+end if
 
 end program
 
