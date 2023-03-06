@@ -1,0 +1,5 @@
+# all compile files
+*.o
+*.mod
+*.exe
+user_build_config
