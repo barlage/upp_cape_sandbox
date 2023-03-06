@@ -1,0 +1,11 @@
+
+#===============================================================================
+#  Baseline configuration for mac gfortran build
+#===============================================================================
+
+ COMPILERF90    =       gfortran-mp-12
+ FREESOURCE     =       -ffree-form
+ F90FLAGS       =       #-fdefault-real-8 -fdefault-double-8
+ NETCDFMOD      =       -I/opt/local/include
+ NETCDFLIB      =       -L/opt/local/lib -lnetcdf -lnetcdff
+ UPPDIR         =       /Users/barlage/work/models/UPP/sorc/ncep_post.fd
